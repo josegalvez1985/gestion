@@ -8,7 +8,10 @@
     "ajv-keywords": "^5.1.0",
     "axios": "^1.6.0",
     "cors": "^2.8.5",
+    "dotenv": "^17.2.4",
     "express": "^4.18.2",
+    "jsonwebtoken": "^9.0.3",
+    "puppeteer": "^24.37.1",
     "qrcode": "^1.5.4",
     "qrcode.react": "^3.1.0",
     "react": "^18.2.0",
@@ -19,8 +22,9 @@
     "@types/node": "^20.0.0",
     "@types/react": "^18.2.0",
     "@types/react-dom": "^18.2.0",
+    "concurrently": "^8.2.2",
     "react-scripts": "5.0.1",
-    "typescript": "^5.0.0"
+    "typescript": "^4.9.5"
   },
   "scripts": {
     "start": "react-scripts start",

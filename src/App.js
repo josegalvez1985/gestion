@@ -72,10 +72,11 @@ function App() {
     setStatusMessage('');
 
     try {
-      await axios.post(`${API_URL}/send-message`, {
-        phone: phoneNumber,
-        message: message
-      });
+      await axios.post(
+        `${API_URL}/send-message`,
+        { phone: phoneNumber, message },
+        { headers: { Authorization: `Bearer ${token}` } }
+      );
       setStatusMessage('✅ Mensaje enviado correctamente');
       setPhoneNumber('');
       setMessage('');
@@ -120,124 +121,15 @@ function App() {
       ) : (
         <div className="App">
           <header className="App-header">
-            <h1>🔗 WhatsApp + Oracle APEX Manager</h1>
+            {/* Título eliminado */}
             <div className="user-info">
-              <span>👤 {user?.nombre || user?.username}</span>
+              <span>{user?.nombre || user?.username}</span>
               <button onClick={handleLogout} className="btn-logout">
-                🚪 Salir
+                Salir
               </button>
             </div>
           </header>
-
-      <div className="container">
-        {/* Estado de conexión */}
-        <div className="status-card">
-          <h2>📱 Estado de WhatsApp</h2>
-          {!connected && qrCode ? (
-            <div className="qr-section">
-              <p>Escanea este código QR con WhatsApp:</p>
-              <img src={qrCode} alt="QR Code" className="qr-code" />
-              <p className="qr-instructions">
-                1. Abre WhatsApp en tu teléfono<br />
-                2. Ve a Configuración → Dispositivos vinculados<br />
-                3. Toca "Vincular un dispositivo"<br />
-                4. Escanea este código
-              </p>
-            </div>
-          ) : connected ? (
-            <div className="connected-status">
-              <span className="status-icon">✅</span>
-              <p>WhatsApp conectado correctamente</p>
-            </div>
-          ) : (
-            <div className="connecting-status">
-              <span className="status-icon">⏳</span>
-              <p>Inicializando WhatsApp...</p>
-            </div>
-          )}
-        </div>
-
-        {/* Comandos disponibles */}
-        <div className="info-card">
-          <h2>💬 Comandos para clientes</h2>
-          <div className="commands-list">
-            <div className="command-item">
-              <code>CONSULTAR</code>
-              <p>Ver información del cliente</p>
-            </div>
-            <div className="command-item">
-              <code>DESCUENTO 15</code>
-              <p>Actualizar descuento (reemplazar 15 con el %)</p>
-            </div>
-            <div className="command-item">
-              <code>AYUDA</code>
-              <p>Ver lista de comandos</p>
-            </div>
-          </div>
-        </div>
-
-        {/* Enviar mensaje manual */}
-        <div className="action-card">
-          <h2>📤 Enviar Mensaje Manual</h2>
-          <form onSubmit={handleSendMessage}>
-            <input
-              type="text"
-              placeholder="Número de teléfono (ej: 595981234567)"
-              value={phoneNumber}
-              onChange={(e) => setPhoneNumber(e.target.value)}
-              required
-              disabled={!connected || loading}
-            />
-            <textarea
-              placeholder="Escribe tu mensaje..."
-              value={message}
-              onChange={(e) => setMessage(e.target.value)}
-              required
-              disabled={!connected || loading}
-              rows="4"
-            />
-            <button type="submit" disabled={!connected || loading}>
-              {loading ? 'Enviando...' : 'Enviar Mensaje'}
-            </button>
-          </form>
-        </div>
-
-        {/* Actualizar descuento manual */}
-        <div className="action-card">
-          <h2>💰 Actualizar Descuento Manual</h2>
-          <form onSubmit={handleUpdateDescuento}>
-            <input
-              type="text"
-              placeholder="Número de teléfono del cliente"
-              value={clientPhone}
-              onChange={(e) => setClientPhone(e.target.value)}
-              required
-              disabled={loading}
-            />
-            <input
-              type="number"
-              placeholder="Porcentaje de descuento (0-100)"
-              value={descuento}
-              onChange={(e) => setDescuento(e.target.value)}
-              min="0"
-              max="100"
-              step="0.01"
-              required
-              disabled={loading}
-            />
-            <button type="submit" disabled={loading}>
-              {loading ? 'Actualizando...' : 'Actualizar Descuento'}
-            </button>
-          </form>
-        </div>
-
-        {/* Mensaje de estado */}
-        {statusMessage && (
-          <div className={`status-message ${statusMessage.includes('✅') ? 'success' : 'error'}`}>
-            {statusMessage}
-          </div>
-        )}
-      </div>
+          <div className="container" />
         </div>
       )}
     </>

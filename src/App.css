@@ -6,10 +6,9 @@
 .App-header {
   background-color: rgba(255, 255, 255, 0.95);
   padding: 20px;
-  text-align: center;
   box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);
   display: flex;
-  justify-content: space-between;
+  justify-content: flex-end;
   align-items: center;
 }
 
@@ -24,6 +23,7 @@
   display: flex;
   align-items: center;
   gap: 15px;
+  margin-left: auto;
 }
 
 .user-info span {

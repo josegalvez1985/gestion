@@ -1,10 +1,15 @@
+require('dotenv').config();
 const express = require('express');
 const cors = require('cors');
 const { Client, LocalAuth } = require('whatsapp-web.js');
 const qrcode = require('qrcode');
+const axios = require('axios');
+const jwt = require('jsonwebtoken');
 
 const app = express();
 const PORT = 3001;
+const JWT_SECRET = process.env.JWT_SECRET || 'dev_secret_change_me';
+const APEX_LOGIN_URL = process.env.APEX_LOGIN_URL || 'https://oracleapex.com/ords/josegalvez/login/auth/login';
 
 app.use(cors());
 app.use(express.json());
@@ -141,6 +146,78 @@ const processMessage = async (message, phoneNumber) => {
 };
 
 // Rutas API
+// Login: Proxy hacia APEX + emisión de JWT
+app.post('/api/auth/login', async (req, res) => {
+  try {
+    const { username, password } = req.body;
+    if (!username || !password) {
+      return res.status(400).json({ success: false, message: 'Username y password son obligatorios' });
+    }
+
+    console.log('[AUTH] Login request', { username });
+    const apexResp = await axios.post(
+      APEX_LOGIN_URL,
+      { username, password },
+      {
+        headers: { 'Content-Type': 'application/json' },
+        timeout: 12000,
+        validateStatus: (s) => s >= 200 && s < 500
+      }
+    );
+    console.log('[AUTH] APEX response status:', apexResp.status);
+
+    let data = apexResp.data || {};
+    console.log('[AUTH] APEX response data type:', typeof data);
+    if (typeof data === 'string') {
+      console.log('[AUTH] APEX response (string):', data.slice(0, 200));
+      try {
+        data = JSON.parse(data);
+        console.log('[AUTH] Parsed APEX JSON');
+      } catch (e) {
+        console.warn('[AUTH] Could not parse APEX response as JSON');
+      }
+    } else {
+      console.log('[AUTH] APEX response (object):', JSON.stringify(data).slice(0, 300));
+    }
+
+    // Validar solo si success===true
+    if (data.success !== true) {
+      return res.status(401).json({ success: false, message: data.message || 'Credenciales inválidas' });
+    }
+
+    // Alinear datos de usuario
+    const user = data.user || { username: data.username || username, nombre: data.nombre || username, rol: data.rol || 'USER' };
+    const jwtPayload = { sub: user.id || username, username: user.username || username, rol: user.rol || 'USER' };
+    const token = jwt.sign(jwtPayload, JWT_SECRET, { expiresIn: '24h' });
+
+    console.log('[AUTH] Issued JWT for', username);
+    return res.json({ success: true, message: data.message || 'Login exitoso', token, user });
+  } catch (err) {
+    console.error('[AUTH] Error:', err.message);
+    const status = err.response?.status || 500;
+    const message = err.code === 'ECONNABORTED'
+      ? 'Tiempo de espera agotado al conectar con APEX'
+      : (err.response?.data?.message || err.message || 'Error conectando con APEX');
+
+    return res.status(status === 500 ? 504 : status).json({ success: false, message });
+  }
+});
+
+// Middleware de protección JWT
+const requireAuth = (req, res, next) => {
+  try {
+    const auth = req.headers.authorization || '';
+    const parts = auth.split(' ');
+    if (parts.length !== 2 || parts[0] !== 'Bearer') {
+      return res.status(401).json({ success: false, message: 'Token no proporcionado' });
+    }
+    const decoded = jwt.verify(parts[1], JWT_SECRET);
+    req.user = decoded;
+    next();
+  } catch (e) {
+    return res.status(401).json({ success: false, message: 'Token inválido o expirado' });
+  }
+};
 app.get('/api/status', (req, res) => {
   res.json({
     connected: isReady,
@@ -148,7 +225,7 @@ app.get('/api/status', (req, res) => {
   });
 });
 
-app.post('/api/send-message', async (req, res) => {
+app.post('/api/send-message', requireAuth, async (req, res) => {
   const { phone, message } = req.body;
   
   if (!isReady) {
